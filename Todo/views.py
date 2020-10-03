@@ -1,7 +1,7 @@
-from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import render, redirect
 from django.utils import timezone
 from Todo.models import Todo
+from .forms import TodoForm
 from django.http import HttpResponseRedirect
 
 
@@ -13,7 +13,6 @@ def home(request):
     })
 
 
-@csrf_exempt
 def add_todo(request):
     current_date = timezone.now()
     content = request.POST["content"]
@@ -22,8 +21,18 @@ def add_todo(request):
     return HttpResponseRedirect("/")
 
 
-@csrf_exempt
 def delete_todo(request, todo_id):
     Todo.objects.get(id=todo_id).delete()
     return HttpResponseRedirect("/")
 
+
+def edit(request, todo_id):
+    if request.method == 'POST':
+        item = Todo.objects.get(pk=todo_id)
+        form = TodoForm(request.POST or None, instance=item)
+        if form.is_valid():
+            form.save()
+            return redirect('home')
+    else:
+        item = Todo.objects.get(pk=todo_id)
+        return render(request, 'Todo/edit.html', {'item': item})
